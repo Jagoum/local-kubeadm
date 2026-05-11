@@ -1,0 +1,103 @@
+# Containerd role for Kubernetes
+# Production-grade container runtime setup
+
+---
+- name: Install containerd dependencies
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+  tags: ['containerd', 'packages']
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  tags: ['containerd', 'repo']
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  tags: ['containerd', 'repo']
+
+- name: Convert Docker GPG key to binary format
+  ansible.builtin.command: >
+    gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      /etc/apt/keyrings/docker.asc
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+  tags: ['containerd', 'repo']
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_facts['lsb']['codename'] }} stable"
+    state: present
+    filename: docker
+  tags: ['containerd', 'repo']
+
+- name: Install containerd
+  ansible.builtin.apt:
+    name: containerd.io
+    state: present
+    update_cache: yes
+  tags: ['containerd', 'packages']
+
+- name: Create containerd configuration directory
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: ['containerd', 'config']
+
+- name: Generate default containerd config
+  ansible.builtin.command: containerd config default
+  register: containerd_config
+  changed_when: false
+  tags: ['containerd', 'config']
+
+- name: Configure containerd with SystemdCgroup
+  ansible.builtin.copy:
+    content: "{{ containerd_config.stdout | regex_replace('SystemdCgroup = false', 'SystemdCgroup = true') }}"
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart containerd
+  tags: ['containerd', 'config']
+
+- name: Start and enable containerd
+  ansible.builtin.service:
+    name: containerd
+    state: started
+    enabled: yes
+  tags: ['containerd', 'service']
+
+- name: Configure crictl to use containerd
+  ansible.builtin.copy:
+    content: |
+      runtime-endpoint: unix:///run/containerd/containerd.sock
+      image-endpoint: unix:///run/containerd/containerd.sock
+      timeout: 10
+      debug: false
+      pull-image-on-create: false
+    dest: /etc/crictl.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  tags: ['containerd', 'crictl']
+
+- name: Verify containerd is running
+  ansible.builtin.command: systemctl is-active containerd
+  register: containerd_status
+  changed_when: false
+  failed_when: containerd_status.stdout != 'active'
+  tags: ['containerd', 'verify']

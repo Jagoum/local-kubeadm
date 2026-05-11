@@ -1,0 +1,72 @@
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/.terraform.lock.hcl
+terraform/crash.log
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
+# Ansible
+ansible/*.log
+ansible/logs/
+ansible/collections/
+ansible/roles/*/
+!ansible/roles/common/
+!ansible/roles/containerd/
+!ansible/roles/kubernetes/
+!ansible/roles/control-plane/
+!ansible/roles/worker/
+!ansible/roles/calico/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSH
+*.pem
+*.key
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Kubernetes
+*.kubeconfig
+*.pem
+*.csr
+*.crt
+*.key
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

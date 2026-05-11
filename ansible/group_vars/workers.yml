@@ -1,0 +1,45 @@
+# Ansible variables for worker nodes
+# Production-grade Kubernetes worker node configuration
+
+---
+# Worker node specific configuration
+
+# Kubelet configuration
+kubelet_port: 10250
+kubelet_readonly_port: 10255
+kubelet_healthz_port: 10248
+
+# Resource allocation
+kube_reserved_cpu: "200m"
+kube_reserved_memory: "500Mi"
+kube_reserved_storage: "1Gi"
+system_reserved_cpu: "200m"
+system_reserved_memory: "500Mi"
+system_reserved_storage: "1Gi"
+
+# Eviction thresholds
+eviction_hard_memory_available: "100Mi"
+eviction_hard_nodefs_available: "10%"
+eviction_hard_nodefs_inodes_free: "5%"
+eviction_hard_imagefs_available: "15%"
+
+eviction_soft_memory_available: "200Mi"
+eviction_soft_nodefs_available: "15%"
+eviction_soft_imagefs_available: "20%"
+
+eviction_soft_grace_period_memory_available: "1m30s"
+eviction_soft_grace_period_nodefs_available: "1m30s"
+eviction_soft_grace_period_imagefs_available: "1m30s"
+
+# Node labels and taints
+node_labels: {}
+node_taints: []
+
+# Maximum resources
+max_pods: 110
+pod_pids_limit: -1
+
+# Image garbage collection
+image_minimum_gc_age: "2m"
+image_gchigh_threshold_percent: 85
+image_gclow_threshold_percent: 80

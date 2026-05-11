@@ -1,0 +1,23 @@
+# Ansible collections and roles requirements
+# Production-grade kubeadm cluster with Calico CNI
+
+collections:
+  # Kubernetes collection for k8s management
+  - name: kubernetes.core
+    version: ">=2.4.0"
+  
+  # Community general utilities
+  - name: community.general
+    version: ">=8.0.0"
+  
+  # Community Docker for container management
+  - name: community.docker
+    version: ">=3.0.0"
+  
+  # POSIX system utilities
+  - name: ansible.posix
+    version: ">=1.5.0"
+
+roles:
+  # No external roles required - using custom roles
+  # All roles are defined in ./roles/ directory

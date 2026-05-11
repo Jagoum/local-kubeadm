@@ -1,0 +1,54 @@
+# Calico CNI role for Kubernetes
+# Production-grade network configuration
+
+---
+- name: Download Calico CNI manifest
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/calico.yaml"
+    dest: /tmp/calico.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  tags: ['calico', 'download']
+
+- name: Apply Calico CNI manifest
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    src: /tmp/calico.yaml
+    state: present
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  tags: ['calico', 'apply']
+
+- name: Wait for Calico pods to be ready
+  kubernetes.core.k8s_info:
+    kubeconfig: /etc/kubernetes/admin.conf
+    kind: Pod
+    namespace: kube-system
+    label_selectors:
+      - k8s-app=calico-node
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 300
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  tags: ['calico', 'verify']
+
+- name: Verify Calico installation
+  ansible.builtin.command: kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system -l k8s-app=calico-node
+  register: calico_status
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  changed_when: false
+  tags: ['calico', 'verify']
+
+- name: Display Calico status
+  ansible.builtin.debug:
+    msg: "{{ calico_status.stdout_lines }}"
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  tags: ['calico', 'verify']

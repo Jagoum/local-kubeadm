@@ -1,0 +1,66 @@
+# Worker node role for joining Kubernetes cluster
+# Production-grade worker node setup
+
+---
+- name: Check if node is already part of cluster
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+  tags: ['worker', 'join']
+
+- name: Get join command from control plane
+  ansible.builtin.set_fact:
+    join_command: "{{ hostvars[groups['control_plane'][0]]['kubeadm_join_command'] }}"
+  when: not kubelet_conf.stat.exists
+  tags: ['worker', 'join']
+
+- name: Join worker node to cluster
+  ansible.builtin.command: "{{ join_command }}"
+  when: not kubelet_conf.stat.exists
+  register: join_result
+  tags: ['worker', 'join']
+
+- name: Create .kube directory for ubuntu user
+  ansible.builtin.file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  tags: ['worker', 'config']
+
+- name: Copy kubeconfig from control plane
+  ansible.builtin.fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: /tmp/k8s-admin.conf
+    flat: yes
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  tags: ['worker', 'config']
+
+- name: Copy kubeconfig to worker node
+  ansible.builtin.copy:
+    src: /tmp/k8s-admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+  tags: ['worker', 'config']
+
+- name: Wait for kubelet to be ready
+  ansible.builtin.wait_for:
+    port: 10250
+    delay: 10
+    timeout: 300
+  tags: ['worker', 'verify']
+
+- name: Verify node is ready
+  ansible.builtin.command: kubectl get nodes {{ inventory_hostname }}
+  register: node_status
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  changed_when: false
+  tags: ['worker', 'verify']
+
+- name: Display node status
+  ansible.builtin.debug:
+    msg: "{{ node_status.stdout_lines }}"
+  tags: ['worker', 'verify']

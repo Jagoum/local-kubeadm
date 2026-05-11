@@ -1,0 +1,8 @@
+# Kubernetes role handlers
+
+---
+- name: Restart kubelet
+  ansible.builtin.service:
+    name: kubelet
+    state: restarted
+    enabled: yes

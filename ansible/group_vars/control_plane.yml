@@ -1,0 +1,36 @@
+# Ansible variables for control plane nodes
+# Production-grade Kubernetes control plane configuration
+
+---
+# Control plane specific configuration
+control_plane_endpoint: "{{ ansible_default_ipv4.address }}"
+
+# API Server configuration
+api_server_port: 6443
+api_server_bind_address: "0.0.0.0"
+
+# Etcd configuration
+etcd_data_dir: "/var/lib/etcd"
+etcd_heartbeat_interval: 100
+etcd_election_timeout: 1000
+etcd_snapshot_count: 10000
+
+# Controller Manager configuration
+controller_manager_port: 10252
+
+# Scheduler configuration
+scheduler_port: 10251
+scheduler_bind_address: "0.0.0.0"
+
+# High availability configuration
+ha_enabled: false
+ha_vip: ""
+ha_port: 6443
+
+# Certificate configuration
+certificate_duration: "8760h"
+certificate_renewal: true
+
+# Backup configuration
+etcd_backup_dir: "/var/lib/etcd-backup"
+etcd_backup_retention: 7

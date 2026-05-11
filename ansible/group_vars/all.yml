@@ -1,0 +1,44 @@
+# Ansible variables for all nodes
+# Production-grade Kubernetes cluster configuration
+# Updated for May 2026 - using supported versions
+
+---
+# Kubernetes configuration
+# Supported versions as of May 2026: 1.33 (maintenance), 1.34 (stable), 1.35 (latest)
+# Using 1.34 (stable, supported until Oct 2026)
+# Minor version for apt repository (e.g., 1.34)
+kubernetes_version: "1.34"
+# Full version for kubeadm config (e.g., 1.34.7 - latest patch as of May 2026)
+kubernetes_full_version: "1.34.7"
+# Calico 3.31.x supports Kubernetes 1.32-1.34 (N-2 policy)
+calico_version: "3.31.4"
+# Pod CIDR: 10.244.0.0/16 (safe for Multipass - avoids 10.253.137.0/24)
+pod_network_cidr: "10.244.0.0/16"
+# Service CIDR: 10.96.0.0/12 (safe for Multipass)
+service_cidr: "10.96.0.0/12"
+
+# Containerd configuration
+# containerd 2.x is the current stable series (2.3 LTS as of Apr 2026)
+containerd_version: "2.0"
+
+# System configuration
+timezone: "UTC"
+
+# Network configuration
+cluster_dns_domain: "cluster.local"
+cluster_name: "k8s-cluster"
+
+# Security configuration
+# Note: PodSecurityPolicy was removed in Kubernetes 1.25
+# Pod Security Admission is now built-in with PodSecurity admission controller
+enable_pod_security_policy: false
+
+# Resource limits
+max_pods_per_node: 110
+
+# Logging configuration
+log_level: "info"
+
+# Backup configuration
+etcd_backup_enabled: true
+etcd_backup_schedule: "0 2 * * *"

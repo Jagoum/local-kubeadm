@@ -1,0 +1,140 @@
+# Kubeadm configuration for production cluster
+# {{ ansible_date_time.iso8601 }}
+# Updated for Kubernetes 1.34+ with v1beta4 API
+
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "{{ control_plane_ip }}"
+  bindPort: 6443
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  taints: []
+timeouts:
+  controlPlaneComponentHealthCheck: 4m0s
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: "{{ kubernetes_full_version }}"
+controlPlaneEndpoint: "{{ control_plane_endpoint | default(control_plane_ip) }}:6443"
+networking:
+  podSubnet: "{{ pod_network_cidr }}"
+  serviceSubnet: "{{ service_cidr }}"
+  dnsDomain: cluster.local
+apiServer:
+  extraArgs:
+    - name: authorization-mode
+      value: "Node,RBAC"
+    - name: enable-admission-plugins
+      value: "NodeRestriction,PodSecurity,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,ResourceQuota"
+    - name: runtime-config
+      value: "api/all=true"
+    - name: event-ttl
+      value: "1h"
+    - name: max-connection-bytes-per-sec
+      value: "0"
+    - name: max-mutating-requests-inflight
+      value: "400"
+    - name: max-requests-inflight
+      value: "800"
+    - name: request-timeout
+      value: "1m"
+    - name: service-node-port-range
+      value: "30000-32767"
+controllerManager:
+  extraArgs:
+    - name: allocate-node-cidrs
+      value: "true"
+    - name: cluster-cidr
+      value: "{{ pod_network_cidr }}"
+    - name: service-cluster-ip-range
+      value: "{{ service_cidr }}"
+    - name: node-cidr-mask-size
+      value: "24"
+    - name: cluster-signing-cert-duration
+      value: "8760h"
+    - name: node-monitor-grace-period
+      value: "40s"
+    - name: node-monitor-period
+      value: "5s"
+    - name: terminated-pod-gc-threshold
+      value: "12500"
+    - name: horizontal-pod-autoscaler-sync-period
+      value: "15s"
+    - name: horizontal-pod-autoscaler-downscale-stabilization
+      value: "5m0s"
+    - name: horizontal-pod-autoscaler-tolerance
+      value: "0.1"
+
+scheduler:
+  extraArgs:
+    - name: bind-address
+      value: "0.0.0.0"
+    - name: secure-port
+      value: "10259"
+    - name: profiling
+      value: "false"
+etcd:
+  local:
+    dataDir: /var/lib/etcd
+    extraArgs:
+      - name: heartbeat-interval
+        value: "100"
+      - name: election-timeout
+        value: "1000"
+      - name: snapshot-count
+        value: "10000"
+      - name: auto-compaction-retention
+        value: "1"
+      - name: max-request-bytes
+        value: "15728640"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+clusterDNS:
+  - 10.96.0.10
+clusterDomain: cluster.local
+maxPods: 110
+podPidsLimit: -1
+evictionHard:
+  memory.available: "100Mi"
+  nodefs.available: "10%"
+  nodefs.inodesFree: "5%"
+  imagefs.available: "15%"
+evictionMinimumReclaim:
+  memory.available: "0Mi"
+  nodefs.available: "500Mi"
+  imagefs.available: "2Gi"
+evictionSoft:
+  memory.available: "200Mi"
+  nodefs.available: "15%"
+  imagefs.available: "20%"
+evictionSoftGracePeriod:
+  memory.available: "1m30s"
+  nodefs.available: "1m30s"
+  imagefs.available: "1m30s"
+systemReserved:
+  cpu: "200m"
+  memory: "500Mi"
+kubeReserved:
+  cpu: "200m"
+  memory: "500Mi"
+rotateCertificates: true
+serverTLSBootstrap: true
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: "2m"
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: "5m"
+    cacheUnauthorizedTTL: "30s"
+featureGates:
+  RotateKubeletServerCertificate: true

@@ -1,0 +1,115 @@
+# Control plane initialization role
+# Production-grade kubeadm cluster initialization with Calico CNI
+
+---
+- name: Check if Kubernetes cluster is already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_config
+  tags: ['control-plane', 'init']
+
+- name: Get control plane IP address
+  ansible.builtin.set_fact:
+    control_plane_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
+  tags: ['control-plane', 'init']
+
+- name: Create kubeadm configuration file
+  ansible.builtin.template:
+    src: kubeadm-config.yaml.j2
+    dest: /etc/kubeadm/kubeadm-config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  when: not kubeadm_config.stat.exists
+  tags: ['control-plane', 'init']
+
+- name: Initialize Kubernetes control plane
+  ansible.builtin.command: >
+    kubeadm init
+    --config=/etc/kubeadm/kubeadm-config.yaml
+    --upload-certs
+  when: not kubeadm_config.stat.exists
+  register: kubeadm_init
+  tags: ['control-plane', 'init']
+
+- name: Create .kube directory for ubuntu user
+  ansible.builtin.file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  tags: ['control-plane', 'config']
+
+- name: Copy admin.conf to ubuntu user's kube config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+    remote_src: yes
+  tags: ['control-plane', 'config']
+
+- name: Create .kube directory for root user
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: ['control-plane', 'config']
+
+- name: Copy admin.conf to root user's kube config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: yes
+  tags: ['control-plane', 'config']
+
+- name: Generate join command for workers
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: join_command
+  changed_when: false
+  tags: ['control-plane', 'join']
+
+- name: Store join command as fact
+  ansible.builtin.set_fact:
+    kubeadm_join_command: "{{ join_command.stdout }}"
+  tags: ['control-plane', 'join']
+
+- name: Wait for Kubernetes API server to be ready
+  ansible.builtin.wait_for:
+    host: "{{ control_plane_ip }}"
+    port: 6443
+    delay: 10
+    timeout: 300
+  tags: ['control-plane', 'verify']
+
+- name: Wait for Calico pods to be ready
+  kubernetes.core.k8s_info:
+    kubeconfig: /etc/kubernetes/admin.conf
+    kind: Pod
+    namespace: kube-system
+    label_selectors:
+      - k8s-app=calico-node
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 300
+  tags: ['control-plane', 'verify']
+
+- name: Verify cluster is healthy
+  ansible.builtin.command: kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes
+  register: cluster_status
+  changed_when: false
+  tags: ['control-plane', 'verify']
+
+- name: Display cluster status
+  ansible.builtin.debug:
+    msg: "{{ cluster_status.stdout_lines }}"
+  tags: ['control-plane', 'verify']
