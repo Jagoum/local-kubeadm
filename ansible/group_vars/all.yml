@@ -42,3 +42,18 @@ log_level: "info"
 # Backup configuration
 etcd_backup_enabled: true
 etcd_backup_schedule: "0 2 * * *"
+
+# MetalLB configuration (Layer 2)
+# Using CRD-based configuration for 0.15+
+metallb_version: "v0.15.3"
+metallb_ip_range: "10.253.137.200-10.253.137.210"
+
+# ArgoCD configuration
+argocd_version: "v2.12.3"
+argocd_namespace: "argocd"
+argocd_repo_url: "https://opendev.org/openstack/openstack-helm.git" # To be updated by user for their fork
+argocd_target_revision: "HEAD"
+argocd_host: "argocd.local"
+
+# Nginx Ingress configuration (for management services)
+nginx_ingress_version: "v1.10.1"

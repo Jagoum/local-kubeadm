@@ -27,6 +27,7 @@
     - socat
     - ebtables
     - ethtool
+    - python3-kubernetes
   tags: ['packages']
 
 - name: Load kernel modules

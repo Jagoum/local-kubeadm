@@ -44,6 +44,15 @@
     - worker
   tags: ['worker', 'join']
 
+- name: Deploy Infrastructure Services
+  hosts: control_plane
+  become: yes
+  roles:
+    - metallb
+    - nginx-ingress
+    - argocd
+  tags: ['infra', 'bootstrap']
+
 - name: Verify cluster health
   hosts: control_plane
   become: yes
