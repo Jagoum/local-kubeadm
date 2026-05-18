@@ -36,11 +36,10 @@ resource "local_file" "ansible_inventory" {
 resource "null_resource" "ansible_provision" {
   # Trigger on VM changes via the remote state IDs property
   triggers = {
-    control_plane_id = data.terraform_remote_state.nodes.outputs.control_plane_id
-    worker_ids       = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
+    playbook_hash    = filesha256("${path.module}/../../ansible/site.yml")
+    vars_hash        = filesha256("${path.module}/../../ansible/group_vars/all.yml")
     inventory_hash   = local_file.ansible_inventory.id
-    k8s_version      = var.kubernetes_version
-    calico_version   = var.calico_version
+    worker_ids       = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
   }
   
   provisioner "local-exec" {
@@ -54,7 +53,52 @@ resource "null_resource" "ansible_provision" {
       .venv/bin/ansible-galaxy collection install -r ansible/requirements.yml
       cd ansible
       ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
-        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}"}'
+        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}"}'
+    EOT
+  }
+}
+
+# Apply OpenStack ArgoCD manifests from this repository
+resource "null_resource" "openstack_argocd_apps" {
+  depends_on = [null_resource.ansible_provision]
+
+  triggers = {
+    # Re-applies whenever any app manifest changes in this repo
+    apps_hash = sha256(join("", [
+      for f in sort(fileset("${path.module}/../../argocd", "**/*.yaml")) : 
+        filesha256("${path.module}/../../argocd/${f}")
+    ]))
+    worker_ids = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
+  }
+
+  # Delete existing ArgoCD applications that are not managed by Terraform
+  provisioner "local-exec" {
+    command = <<-EOT
+      export KUBECONFIG=~/.kube/config.local
+      
+      # Delete the bootstrap app (App of Apps pattern - no longer used)
+      kubectl delete application bootstrap-openstack -n argocd --ignore-not-found=true
+      
+      # Delete all existing applications to let Terraform manage them
+      kubectl delete application --all -n argocd --ignore-not-found=true
+      
+      # Wait for applications to be deleted
+      sleep 5
+    EOT
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      export KUBECONFIG=~/.kube/config.local
+      
+      # Apply AppProject first (so apps can reference it)
+      kubectl apply -f ${path.module}/../../argocd/project.yaml
+
+      # Ensure the openstack namespace exists
+      kubectl get ns openstack 2>/dev/null || kubectl create ns openstack
+
+      # Apply all application manifests from this repository
+      kubectl apply -f ${path.module}/../../argocd/apps/
     EOT
   }
 }

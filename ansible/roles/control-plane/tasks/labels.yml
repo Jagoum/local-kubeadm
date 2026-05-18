@@ -1,0 +1,26 @@
+# OpenStack specific node labeling
+---
+- name: Label worker-1 as openstack-control and infra
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: worker-1
+        labels:
+          node.home.lab/dedicated: openstack-control
+          openstack-control-node: "true"
+          infra-node: "true"
+  tags: ['labels', 'openstack']
+
+- name: Label worker-2 as openstack-compute
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: worker-2
+        labels:
+          node.home.lab/dedicated: openstack-compute
+          openstack-compute-node: "true"
+  tags: ['labels', 'openstack']

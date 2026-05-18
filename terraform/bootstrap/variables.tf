@@ -31,11 +31,20 @@ variable "service_cidr" {
 }
 
 variable "gitops_repo_url" {
-  type    = string
-  default = "https://opendev.org/openstack/openstack-helm.git"
+  description = "Git repository URL for ArgoCD applications (source of truth)"
+  type        = string
+  default     = "https://github.com/skyengpro/openstack-deployment.git"
 }
 
-variable "gitops_branch" {
-  type    = string
-  default = "HEAD"
+variable "gitops_target_revision" {
+  description = "Git branch, tag, or commit to use for ArgoCD applications"
+  type        = string
+  default     = "feat/deploy-neutron-agent-on-bare-metal-using-containers"
+}
+
+variable "github_pat" {
+  description = "GitHub Personal Access Token for private repository authentication (leave empty for public repos)"
+  type        = string
+  default     = ""
+  sensitive   = true
 }

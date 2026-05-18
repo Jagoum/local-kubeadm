@@ -24,5 +24,5 @@ data "terraform_remote_state" "nodes" {
 }
 
 provider "kubernetes" {
-  config_path = "/etc/kubernetes/admin.conf"
+  config_path = pathexpand("~/.kube/config.local")
 }

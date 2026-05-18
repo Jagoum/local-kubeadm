@@ -1,0 +1,13 @@
+# Terraform variables example file for Nodes layer
+# Copy this file to terraform.tfvars and customize
+
+# VM Configuration
+control_plane_name = "control-plane"
+worker_names       = ["worker-1", "worker-2"]
+
+# Ubuntu image (24.04 LTS)
+ubuntu_image = "24.04"
+
+# SSH public key
+# Example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ... user@host
+ssh_public_key = ""

@@ -1,5 +1,6 @@
 # Main playbook for kubeadm cluster setup
 # Production-grade Kubernetes cluster with Calico CNI
+# Updated: Added OpenStack node labeling and sync-wave support
 
 ---
 - name: Install common prerequisites on all nodes
@@ -50,6 +51,7 @@
   roles:
     - metallb
     - nginx-ingress
+    - longhorn
     - argocd
   tags: ['infra', 'bootstrap']
 

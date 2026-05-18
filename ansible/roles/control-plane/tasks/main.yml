@@ -109,7 +109,6 @@
   changed_when: false
   tags: ['control-plane', 'verify']
 
-- name: Display cluster status
-  ansible.builtin.debug:
-    msg: "{{ cluster_status.stdout_lines }}"
-  tags: ['control-plane', 'verify']
+- name: Apply OpenStack node labels
+  ansible.builtin.include_tasks: labels.yml
+  tags: ['labels', 'openstack']

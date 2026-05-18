@@ -51,9 +51,10 @@ metallb_ip_range: "10.253.137.200-10.253.137.210"
 # ArgoCD configuration
 argocd_version: "v2.12.3"
 argocd_namespace: "argocd"
-argocd_repo_url: "https://opendev.org/openstack/openstack-helm.git" # To be updated by user for their fork
-argocd_target_revision: "HEAD"
+argocd_repo_url: "https://github.com/skyengpro/openstack-deployment.git"
+argocd_target_revision: "feat/deploy-neutron-agent-on-bare-metal-using-containers"
 argocd_host: "argocd.local"
+# github_pat is passed via Terraform extra-vars for security
 
 # Nginx Ingress configuration (for management services)
 nginx_ingress_version: "v1.10.1"

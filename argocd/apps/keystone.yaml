@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keystone
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: openstack
+  source:
+    repoURL: https://github.com/skyengpro/openstack-deployment.git
+    targetRevision: feat/deploy-neutron-agent-on-bare-metal-using-containers
+    path: charts/keystone-wrapper
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: "jobs.db_init.enabled"
+          value: "true"
+        - name: "jobs.db_sync.enabled"
+          value: "true"
+        - name: "jobs.bootstrap.enabled"
+          value: "true"
+        - name: "jobs.fernet_setup.enabled"
+          value: "false"
+        - name: "jobs.credential_setup.enabled"
+          value: "false"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openstack
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: keystone-fernet-keys
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: keystone-credential-keys
+      jsonPointers:
+        - /data
