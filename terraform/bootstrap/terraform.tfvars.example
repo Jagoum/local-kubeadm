@@ -20,3 +20,7 @@ gitops_target_revision = "feat/deploy-neutron-agent-on-bare-metal-using-containe
 # For private repos, generate a PAT with 'repo' scope at:
 # https://github.com/settings/tokens
 github_pat = ""
+
+# Whether to deploy OpenStack applications via ArgoCD during bootstrap
+# Set to false for cluster-only setup (faster)
+enable_openstack = false

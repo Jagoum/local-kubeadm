@@ -39,7 +39,7 @@ variable "gitops_repo_url" {
 variable "gitops_target_revision" {
   description = "Git branch, tag, or commit to use for ArgoCD applications"
   type        = string
-  default     = "feat/deploy-neutron-agent-on-bare-metal-using-containers"
+  default     = "main"
 }
 
 variable "github_pat" {
@@ -47,4 +47,10 @@ variable "github_pat" {
   type        = string
   default     = ""
   sensitive   = true
+}
+
+variable "enable_openstack" {
+  description = "Whether to deploy OpenStack applications via ArgoCD during bootstrap"
+  type        = bool
+  default     = false
 }

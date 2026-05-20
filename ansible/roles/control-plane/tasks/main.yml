@@ -100,7 +100,7 @@
     wait_condition:
       type: Ready
       status: "True"
-    wait_timeout: 300
+    wait_timeout: 600
   tags: ['control-plane', 'verify']
 
 - name: Verify cluster is healthy

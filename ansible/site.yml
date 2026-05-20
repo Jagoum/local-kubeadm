@@ -38,6 +38,17 @@
     - calico
   tags: ['calico', 'cni']
 
+- name: Fetch kubeconfig to local machine
+  hosts: control_plane
+  become: yes
+  tasks:
+    - name: Fetch admin.conf
+      ansible.builtin.fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: "~/.kube/config.local"
+        flat: yes
+  tags: ['config', 'bootstrap']
+
 - name: Join worker nodes to cluster
   hosts: workers
   become: yes

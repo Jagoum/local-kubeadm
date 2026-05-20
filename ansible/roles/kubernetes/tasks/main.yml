@@ -38,6 +38,8 @@
       - "kubelet={{ kubernetes_full_version }}-1.1"
       - "kubeadm={{ kubernetes_full_version }}-1.1"
       - "kubectl={{ kubernetes_full_version }}-1.1"
+      - "python3-kubernetes"
+      - "python3-yaml"
     state: present
     update_cache: yes
     allow_unauthenticated: no

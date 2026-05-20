@@ -44,22 +44,29 @@ resource "null_resource" "ansible_provision" {
   
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
       cd ${path.module}/../..
       if [ ! -d ".venv" ]; then
         python3 -m venv .venv
         .venv/bin/pip install --upgrade pip
-        .venv/bin/pip install ansible
+        .venv/bin/pip install ansible kubernetes pyyaml
       fi
       .venv/bin/ansible-galaxy collection install -r ansible/requirements.yml
       cd ansible
       ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
         --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}"}'
+      
+      echo "Fetching fresh kubeconfig from control plane..."
+      ssh -o StrictHostKeyChecking=no ubuntu@${local.control_plane_ip} "sudo cat /etc/kubernetes/admin.conf" > ~/.kube/config.local
+      chmod 600 ~/.kube/config.local
     EOT
   }
 }
 
 # Apply OpenStack ArgoCD manifests from this repository
 resource "null_resource" "openstack_argocd_apps" {
+  count = var.enable_openstack ? 1 : 0
+  
   depends_on = [null_resource.ansible_provision]
 
   triggers = {
@@ -74,6 +81,7 @@ resource "null_resource" "openstack_argocd_apps" {
   # Delete existing ArgoCD applications that are not managed by Terraform
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
       export KUBECONFIG=~/.kube/config.local
       
       # Delete the bootstrap app (App of Apps pattern - no longer used)
@@ -89,8 +97,20 @@ resource "null_resource" "openstack_argocd_apps" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
       export KUBECONFIG=~/.kube/config.local
       
+      # Wait for ArgoCD CRDs to be available
+      echo "Waiting for ArgoCD CRDs to be registered..."
+      for i in {1..20}; do
+        if kubectl get crd applications.argoproj.io appprojects.argoproj.io >/dev/null 2>&1; then
+          echo "ArgoCD CRDs are ready."
+          break
+        fi
+        echo "Waiting for CRDs (attempt $i/20)..."
+        sleep 5
+      done
+
       # Apply AppProject first (so apps can reference it)
       kubectl apply -f ${path.module}/../../argocd/project.yaml
 

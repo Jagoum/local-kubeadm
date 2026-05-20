@@ -5,7 +5,7 @@ resource "multipass_instance" "control_plane" {
   
   # 2 vCPU, 4GB memory, 20GB disk
   cpus   = 2
-  memory = "4G"
+  memory = "5G"
   disk   = "20G"
   
   # Cloud-init configuration for SSH and basic setup
@@ -23,8 +23,8 @@ resource "multipass_instance" "workers" {
   image = var.ubuntu_image
   
   # 2 vCPU, 3GB memory, 40GB disk
-  cpus   = 2
-  memory = "3G"
+  cpus   = 3
+  memory = "5G"
   disk   = "40G"
   
   # Cloud-init configuration for SSH and basic setup
