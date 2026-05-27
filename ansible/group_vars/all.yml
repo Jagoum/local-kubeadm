@@ -58,3 +58,9 @@ argocd_host: "argocd.local"
 
 # Nginx Ingress configuration (for management services)
 nginx_ingress_version: "v1.10.1"
+
+# Component Toggles
+enable_metallb: true
+enable_nginx_ingress: true
+enable_longhorn: true
+enable_argocd: true

@@ -54,3 +54,28 @@ variable "enable_openstack" {
   type        = bool
   default     = false
 }
+
+# Component Toggles
+variable "enable_metallb" {
+  description = "Whether to deploy MetalLB"
+  type        = bool
+  default     = true
+}
+
+variable "enable_nginx_ingress" {
+  description = "Whether to deploy Nginx Ingress"
+  type        = bool
+  default     = true
+}
+
+variable "enable_longhorn" {
+  description = "Whether to deploy Longhorn"
+  type        = bool
+  default     = true
+}
+
+variable "enable_argocd" {
+  description = "Whether to deploy ArgoCD"
+  type        = bool
+  default     = true
+}

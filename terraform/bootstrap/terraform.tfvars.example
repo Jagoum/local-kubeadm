@@ -24,3 +24,10 @@ github_pat = ""
 # Whether to deploy OpenStack applications via ArgoCD during bootstrap
 # Set to false for cluster-only setup (faster)
 enable_openstack = false
+
+# Component Toggles
+# Set to false to skip installation of specific components
+enable_metallb       = true
+enable_nginx_ingress = true
+enable_longhorn      = true
+enable_argocd        = true

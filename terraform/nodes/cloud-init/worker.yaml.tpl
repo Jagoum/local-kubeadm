@@ -7,11 +7,18 @@ hostname: ${hostname}
 manage_etc_hosts: true
 
 # SSH configuration
-ssh_authorized_keys:
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin, sudo
+    shell: /bin/bash
+    lock_passwd: false
+    password: ${node_password}
+    ssh_authorized_keys:
 %{ if ssh_public_key != "" ~}
-  - ${ssh_public_key}
+      - ${ssh_public_key}
 %{ else ~}
-  - # No Default Key, Must Bring Your Key
+      - # No Default Key, Must Bring Your Key 
 %{ endif ~}
 
 # Package management

@@ -2,12 +2,18 @@
 # Copy this file to terraform.tfvars and customize
 
 # VM Configuration
-control_plane_name = "control-plane"
-worker_names       = ["worker-1", "worker-2"]
+control_plane_name = "k8s-control-plane"
+worker_names       = ["k8s-worker-1", "k8s-worker-2"]
 
-# Ubuntu image (24.04 LTS)
-ubuntu_image = "24.04"
+# Incus Configuration
+# Image supports cloud-init: images:ubuntu/24.04/cloud
+ubuntu_image  = "images:ubuntu/24.04/cloud"
+incus_network = "incusbr0"
+incus_pool    = "default"
 
-# SSH public key
-# Example: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ... user@host
+# SSH and User Configuration
+# Generate a key: ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s_cluster_key
 ssh_public_key = ""
+
+# Password for the 'ubuntu' user (used for console access)
+node_password = "ubuntu-password-here"

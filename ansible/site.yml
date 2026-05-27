@@ -60,10 +60,10 @@
   hosts: control_plane
   become: yes
   roles:
-    - metallb
-    - nginx-ingress
-    - longhorn
-    - argocd
+    - { role: metallb, when: enable_metallb | default(true) }
+    - { role: nginx-ingress, when: enable_nginx_ingress | default(true) }
+    - { role: longhorn, when: enable_longhorn | default(true) }
+    - { role: argocd, when: enable_argocd | default(true) }
   tags: ['infra', 'bootstrap']
 
 - name: Verify cluster health

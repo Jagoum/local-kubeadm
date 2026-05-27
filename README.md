@@ -1,6 +1,6 @@
 # Local Kubernetes Cluster with Kubeadm
 
-Production-grade Kubernetes cluster deployment using Terraform and Ansible on Multipass VMs with Calico CNI.
+Production-grade Kubernetes cluster deployment using Terraform and Ansible on Incus VMs with Calico CNI.
 
 ## 🏗️ Architecture
 
@@ -18,7 +18,7 @@ This project provisions a production-ready Kubernetes cluster with the following
 ### Required Software
 
 - **Terraform** >= 1.0.0
-- **Multipass** >= 1.12.0
+- **Incus** >= 6.0 (installed and configured)
 - **Python** >= 3.9 (with venv module)
 - **Make** (usually pre-installed on Linux/macOS)
 
@@ -93,8 +93,8 @@ make ansible-run
 ### 5. Verify Deployment
 
 ```bash
-# SSH into control plane
-multipass shell k8s-control-plane
+# Access control plane
+incus exec k8s-control-plane -- sudo -i -u ubuntu
 
 # Verify cluster status
 sudo kubectl get nodes -o wide
@@ -106,10 +106,12 @@ sudo kubectl get pods --all-namespaces
 ```
 local-kubeadm/
 ├── terraform/
-│   ├── main.tf                    # Main Terraform configuration
-│   ├── variables.tf               # Terraform variables
-│   ├── outputs.tf                 # Terraform outputs
-│   └── cloud-init/
+│   ├── bootstrap/                 # Ansible inventory generation & orchestration
+│   ├── nodes/                     # VM provisioning (Incus)
+│   │   ├── main.tf                # Main Terraform configuration
+│   │   ├── variables.tf           # Terraform variables
+│   │   ├── outputs.tf             # Terraform outputs
+│   │   └── cloud-init/
 │       ├── control-plane.yaml.tpl # Control plane cloud-init
 │       └── worker.yaml.tpl        # Worker node cloud-init
 ├── ansible/
@@ -260,11 +262,11 @@ kubectl get cs
 #### 1. VMs Not Starting
 
 ```bash
-# Check Multipass status
-multipass list
+# Check Incus status
+incus list
 
 # Check VM details
-multipass info k8s-control-plane
+incus info k8s-control-plane
 ```
 
 #### 2. Ansible Connection Issues
@@ -318,7 +320,9 @@ ansible-playbook -i inventory/hosts.ini site.yml
 ### Destroy Infrastructure
 
 ```bash
-cd terraform
+cd terraform/nodes
+terraform destroy
+cd ../bootstrap
 terraform destroy
 ```
 
@@ -326,8 +330,7 @@ terraform destroy
 
 ```bash
 # Delete VMs
-multipass delete k8s-control-plane k8s-worker-1 k8s-worker-2
-multipass purge
+incus delete -f k8s-control-plane k8s-worker-1 k8s-worker-2
 ```
 
 ## 📝 Customization
@@ -353,10 +356,18 @@ terraform apply
 Edit [`terraform/main.tf`](terraform/main.tf:1):
 
 ```hcl
-resource "multipass_vm" "control_plane" {
-  cpus   = 4      # Increase CPU
-  memory = "8G"    # Increase memory
-  disk   = "50G"   # Increase disk
+resource "incus_instance" "control_plane" {
+  config = {
+    "limits.cpu"    = 4      # Increase CPU
+    "limits.memory" = "8GiB"  # Increase memory
+  }
+  device {
+    name = "root"
+    type = "disk"
+    properties = {
+      size = "50GiB"   # Increase disk
+    }
+  }
 }
 ```
 
@@ -413,7 +424,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 - [Calico Documentation](https://docs.projectcalico.org/)
-- [Terraform Multipass Provider](https://registry.terraform.io/providers/larstobi/multipass/)
+- [Incus Documentation](https://linuxcontainers.org/incus/docs/main/)
+- [Terraform Incus Provider](https://registry.terraform.io/providers/lxc/incus/)
 - [Ansible Kubernetes Collection](https://galaxy.ansible.com/kubernetes/core)
 
 ## 📧 Support

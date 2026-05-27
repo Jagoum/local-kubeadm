@@ -54,7 +54,7 @@ resource "null_resource" "ansible_provision" {
       .venv/bin/ansible-galaxy collection install -r ansible/requirements.yml
       cd ansible
       ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
-        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}"}'
+        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}", "enable_metallb": ${var.enable_metallb}, "enable_nginx_ingress": ${var.enable_nginx_ingress}, "enable_longhorn": ${var.enable_longhorn}, "enable_argocd": ${var.enable_argocd}}'
       
       echo "Fetching fresh kubeconfig from control plane..."
       ssh -o StrictHostKeyChecking=no ubuntu@${local.control_plane_ip} "sudo cat /etc/kubernetes/admin.conf" > ~/.kube/config.local
