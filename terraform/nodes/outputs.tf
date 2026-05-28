@@ -1,5 +1,5 @@
 output "control_plane_ip" {
-  value = incus_instance.control_plane.ipv4_address
+  value = incus_instance.control_plane.ipv4_address != null ? incus_instance.control_plane.ipv4_address : ""
 }
 
 output "control_plane_id" {
@@ -7,7 +7,7 @@ output "control_plane_id" {
 }
 
 output "worker_ips" {
-  value = [for w in incus_instance.workers : w.ipv4_address]
+  value = [for w in incus_instance.workers : w.ipv4_address != null ? w.ipv4_address : ""]
 }
 
 output "worker_ids" {

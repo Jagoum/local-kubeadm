@@ -3,6 +3,16 @@
 # Updated: Added OpenStack node labeling and sync-wave support
 
 ---
+- name: Wait for all nodes to become reachable
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Wait for SSH connection
+      ansible.builtin.wait_for_connection:
+        timeout: 600
+        delay: 10
+  tags: ['always']
+
 - name: Install common prerequisites on all nodes
   hosts: all
   become: yes

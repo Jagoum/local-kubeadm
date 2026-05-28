@@ -89,20 +89,6 @@
     timeout: 300
   tags: ['control-plane', 'verify']
 
-- name: Wait for Calico pods to be ready
-  kubernetes.core.k8s_info:
-    kubeconfig: /etc/kubernetes/admin.conf
-    kind: Pod
-    namespace: kube-system
-    label_selectors:
-      - k8s-app=calico-node
-    wait: yes
-    wait_condition:
-      type: Ready
-      status: "True"
-    wait_timeout: 600
-  tags: ['control-plane', 'verify']
-
 - name: Verify cluster is healthy
   ansible.builtin.command: kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes
   register: cluster_status

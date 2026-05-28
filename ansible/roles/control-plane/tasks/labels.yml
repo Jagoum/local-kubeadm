@@ -1,26 +1,22 @@
 # OpenStack specific node labeling
 ---
-- name: Label worker-1 as openstack-control and infra
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: v1
-      kind: Node
-      metadata:
-        name: worker-1
-        labels:
-          node.home.lab/dedicated: openstack-control
-          openstack-control-node: "true"
-          infra-node: "true"
+- name: Label first worker as openstack-control and infra
+  ansible.builtin.command: >
+    kubectl label node {{ groups['workers'][0] }}
+    node.home.lab/dedicated=openstack-control
+    openstack-control-node=true
+    infra-node=true
+    --overwrite
+  when: groups['workers'] | length >= 1
+  changed_when: true
   tags: ['labels', 'openstack']
 
-- name: Label worker-2 as openstack-compute
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: v1
-      kind: Node
-      metadata:
-        name: worker-2
-        labels:
-          node.home.lab/dedicated: openstack-compute
-          openstack-compute-node: "true"
+- name: Label second worker as openstack-compute
+  ansible.builtin.command: >
+    kubectl label node {{ groups['workers'][1] }}
+    node.home.lab/dedicated=openstack-compute
+    openstack-compute-node=true
+    --overwrite
+  when: groups['workers'] | length >= 2
+  changed_when: true
   tags: ['labels', 'openstack']

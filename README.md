@@ -138,6 +138,8 @@ local-kubeadm/
 
 ### Terraform Variables
 
+You can customize the cluster by creating a `terraform/bootstrap/terraform.tfvars` file (you can copy `terraform.tfvars.example`).
+
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `control_plane_name` | Control plane node name | `k8s-control-plane` |
@@ -147,6 +149,10 @@ local-kubeadm/
 | `calico_version` | Calico CNI version | `3.31.x` |
 | `pod_network_cidr` | Pod network CIDR | `10.244.0.0/16` |
 | `service_cidr` | Service network CIDR | `10.96.0.0/12` |
+| `enable_metallb` | Whether to deploy MetalLB | `true` |
+| `enable_nginx_ingress`| Whether to deploy Nginx Ingress | `true` |
+| `enable_longhorn` | Whether to deploy Longhorn | `true` |
+| `enable_argocd` | Whether to deploy ArgoCD | `true` |
 
 ### Ansible Variables
 

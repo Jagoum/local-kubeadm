@@ -37,27 +37,27 @@ install-collections: ## Install Ansible collections (idempotent)
 
 init: ## Initialize Terraform
 	@echo "Initializing Nodes..."
-	cd terraform/nodes && terraform init
+	sg incus-admin -c 'cd terraform/nodes && terraform init'
 	@echo "Initializing Bootstrap..."
-	cd terraform/bootstrap && terraform init
+	sg incus-admin -c 'cd terraform/bootstrap && terraform init'
 
 plan: ## Plan Terraform changes
 	@echo "Planning Nodes..."
-	cd terraform/nodes && terraform plan
+	sg incus-admin -c 'cd terraform/nodes && terraform plan'
 	@echo "Planning Bootstrap..."
-	cd terraform/bootstrap && terraform plan
+	sg incus-admin -c 'cd terraform/bootstrap && terraform plan'
 
 apply: ## Apply Terraform changes
 	@echo "Applying Nodes..."
-	cd terraform/nodes && terraform apply -auto-approve
+	sg incus-admin -c 'cd terraform/nodes && terraform apply -auto-approve'
 	@echo "Applying Bootstrap..."
-	cd terraform/bootstrap && terraform apply -auto-approve
+	sg incus-admin -c 'cd terraform/bootstrap && terraform apply -auto-approve'
 
 destroy: ## Destroy Terraform infrastructure
 	@echo "Destroying Bootstrap..."
-	cd terraform/bootstrap && terraform destroy -auto-approve
+	sg incus-admin -c 'cd terraform/bootstrap && terraform destroy -auto-approve'
 	@echo "Destroying Nodes..."
-	cd terraform/nodes && terraform destroy -auto-approve
+	sg incus-admin -c 'cd terraform/nodes && terraform destroy -auto-approve'
 
 deploy: ## Deploy complete infrastructure (create venv, install ansible, apply terraform)
 	@echo "Deploying complete infrastructure..."
@@ -79,24 +79,24 @@ clean-venv: ## Remove only virtual environment
 
 status: ## Check cluster status
 	@echo "Checking cluster status..."
-	@incus list
+	@sg incus-admin -c 'incus list'
 	@echo ""
 	@echo "To check Kubernetes cluster status, run:"
-	@echo "  incus exec control-plane -- sudo -i -u ubuntu"
+	@echo "  sg incus-admin -c 'incus exec k8s-control-plane -- sudo -i -u ubuntu'"
 	@echo "  sudo kubectl get nodes -o wide"
 	@echo "  sudo kubectl get pods --all-namespaces"
 
 ssh-control: ## SSH into control plane
 	@echo "Connecting to control plane..."
-	incus exec control-plane -- sudo -i -u ubuntu
+	sg incus-admin -c 'incus exec k8s-control-plane -- sudo -i -u ubuntu'
 
 ssh-worker1: ## SSH into worker 1
 	@echo "Connecting to worker 1..."
-	incus exec worker-1 -- sudo -i -u ubuntu
+	sg incus-admin -c 'incus exec k8s-worker-1 -- sudo -i -u ubuntu'
 
 ssh-worker2: ## SSH into worker 2
 	@echo "Connecting to worker 2..."
-	incus exec worker-2 -- sudo -i -u ubuntu
+	sg incus-admin -c 'incus exec k8s-worker-2 -- sudo -i -u ubuntu'
 
 ansible-run: ## Run Ansible playbook manually (requires venv)
 	@echo "Running Ansible playbook..."

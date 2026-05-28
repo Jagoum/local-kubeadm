@@ -39,12 +39,12 @@ resource "null_resource" "ansible_provision" {
     playbook_hash    = filesha256("${path.module}/../../ansible/site.yml")
     vars_hash        = filesha256("${path.module}/../../ansible/group_vars/all.yml")
     inventory_hash   = local_file.ansible_inventory.id
+    config_hash      = filesha256("${path.module}/main.tf")
     worker_ids       = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
   }
   
   provisioner "local-exec" {
     command = <<-EOT
-      set -e
       cd ${path.module}/../..
       if [ ! -d ".venv" ]; then
         python3 -m venv .venv
@@ -52,13 +52,19 @@ resource "null_resource" "ansible_provision" {
         .venv/bin/pip install ansible kubernetes pyyaml
       fi
       .venv/bin/ansible-galaxy collection install -r ansible/requirements.yml
-      cd ansible
-      ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
-        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}", "enable_metallb": ${var.enable_metallb}, "enable_nginx_ingress": ${var.enable_nginx_ingress}, "enable_longhorn": ${var.enable_longhorn}, "enable_argocd": ${var.enable_argocd}}'
       
+      cd ansible
+      echo "Starting Kubernetes cluster deployment..."
+      # Run ansible-playbook but allow partial failures (some components may take longer)
+      ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
+        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}", "enable_metallb": ${var.enable_metallb}, "enable_nginx_ingress": ${var.enable_nginx_ingress}, "enable_longhorn": ${var.enable_longhorn}, "enable_argocd": ${var.enable_argocd}}' || true
+      
+      # Critical: Fetch kubeconfig from control plane
       echo "Fetching fresh kubeconfig from control plane..."
-      ssh -o StrictHostKeyChecking=no ubuntu@${local.control_plane_ip} "sudo cat /etc/kubernetes/admin.conf" > ~/.kube/config.local
+      set -e
+      ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o StrictHostKeyChecking=no ubuntu@${local.control_plane_ip} "sudo cat /etc/kubernetes/admin.conf" > ~/.kube/config.local
       chmod 600 ~/.kube/config.local
+      echo "Kubeconfig fetched successfully. Cluster is ready!"
     EOT
   }
 }

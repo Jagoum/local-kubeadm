@@ -14,6 +14,16 @@ resource "incus_instance" "control_plane" {
     })
   }
 
+  wait_for {
+    type  = "delay"
+    delay = "60s"
+  }
+
+  wait_for {
+    type = "ipv4"
+    nic  = "enp5s0"
+  }
+
   device {
     name = "root"
     type = "disk"
@@ -50,6 +60,16 @@ resource "incus_instance" "workers" {
       hostname       = var.worker_names[count.index]
       node_password  = var.node_password
     })
+  }
+
+  wait_for {
+    type  = "delay"
+    delay = "60s"
+  }
+
+  wait_for {
+    type = "ipv4"
+    nic  = "enp5s0"
   }
 
   device {

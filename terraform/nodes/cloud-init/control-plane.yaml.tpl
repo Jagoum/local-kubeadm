@@ -37,6 +37,7 @@ packages:
   - htop
   - vim
   - net-tools
+  - openssh-server
 
 # Kernel and system tuning for Kubernetes
 write_files:
