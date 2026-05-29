@@ -44,9 +44,10 @@ etcd_backup_enabled: true
 etcd_backup_schedule: "0 2 * * *"
 
 # MetalLB configuration (Layer 2)
-# Using CRD-based configuration for 0.15+
+# Must be from the Incus bridge subnet and outside the Incus DHCP range.
+# Current nodes are on incusbr1 with 10.75.20.x addresses.
 metallb_version: "v0.15.3"
-metallb_ip_range: "10.253.137.200-10.253.137.210"
+metallb_ip_range: "10.75.20.200-10.75.20.210"
 
 # ArgoCD configuration
 argocd_version: "v2.12.3"

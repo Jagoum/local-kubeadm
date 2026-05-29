@@ -7,7 +7,7 @@ locals {
 # Generate inventory file for Ansible
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/../../ansible/inventory/hosts.ini"
-  
+
   content = <<-EOT
     [all:vars]
     ansible_user=ubuntu
@@ -22,9 +22,9 @@ resource "local_file" "ansible_inventory" {
     ${var.control_plane_name} ansible_host=${local.control_plane_ip}
     
     [workers]
-    %{ for i, worker in var.worker_names ~}
+    %{for i, worker in var.worker_names~}
     ${worker} ansible_host=${local.worker_ips[i]}
-    %{ endfor ~}
+    %{endfor~}
     
     [k8s_cluster:children]
     control_plane
@@ -36,13 +36,13 @@ resource "local_file" "ansible_inventory" {
 resource "null_resource" "ansible_provision" {
   # Trigger on VM changes via the remote state IDs property
   triggers = {
-    playbook_hash    = filesha256("${path.module}/../../ansible/site.yml")
-    vars_hash        = filesha256("${path.module}/../../ansible/group_vars/all.yml")
-    inventory_hash   = local_file.ansible_inventory.id
-    config_hash      = filesha256("${path.module}/main.tf")
-    worker_ids       = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
+    playbook_hash  = filesha256("${path.module}/../../ansible/site.yml")
+    vars_hash      = filesha256("${path.module}/../../ansible/group_vars/all.yml")
+    inventory_hash = local_file.ansible_inventory.id
+    config_hash    = filesha256("${path.module}/main.tf")
+    worker_ids     = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       cd ${path.module}/../..
@@ -57,7 +57,7 @@ resource "null_resource" "ansible_provision" {
       echo "Starting Kubernetes cluster deployment..."
       # Run ansible-playbook but allow partial failures (some components may take longer)
       ../.venv/bin/ansible-playbook -i inventory/hosts.ini site.yml \
-        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}", "enable_metallb": ${var.enable_metallb}, "enable_nginx_ingress": ${var.enable_nginx_ingress}, "enable_longhorn": ${var.enable_longhorn}, "enable_argocd": ${var.enable_argocd}}' || true
+        --extra-vars '{"control_plane_endpoint": "${local.control_plane_ip}", "metallb_ip_range": "${var.metallb_ip_range}", "argocd_repo_url": "${var.gitops_repo_url}", "argocd_target_revision": "${var.gitops_target_revision}", "github_pat": "${var.github_pat}", "enable_metallb": ${var.enable_metallb}, "enable_nginx_ingress": ${var.enable_nginx_ingress}, "enable_longhorn": ${var.enable_longhorn}, "enable_argocd": ${var.enable_argocd}}' || true
       
       # Critical: Fetch kubeconfig from control plane
       echo "Fetching fresh kubeconfig from control plane..."
@@ -72,14 +72,14 @@ resource "null_resource" "ansible_provision" {
 # Apply OpenStack ArgoCD manifests from this repository
 resource "null_resource" "openstack_argocd_apps" {
   count = var.enable_openstack ? 1 : 0
-  
+
   depends_on = [null_resource.ansible_provision]
 
   triggers = {
     # Re-applies whenever any app manifest changes in this repo
     apps_hash = sha256(join("", [
-      for f in sort(fileset("${path.module}/../../argocd", "**/*.yaml")) : 
-        filesha256("${path.module}/../../argocd/${f}")
+      for f in sort(fileset("${path.module}/../../argocd", "**/*.yaml")) :
+      filesha256("${path.module}/../../argocd/${f}")
     ]))
     worker_ids = join(",", data.terraform_remote_state.nodes.outputs.worker_ids)
   }

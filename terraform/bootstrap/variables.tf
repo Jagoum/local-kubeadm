@@ -30,6 +30,12 @@ variable "service_cidr" {
   default = "10.96.0.0/12"
 }
 
+variable "metallb_ip_range" {
+  description = "Layer 2 address range MetalLB can advertise. Use free IPs from the Incus bridge subnet, outside Incus DHCP."
+  type        = string
+  default     = "10.75.20.200-10.75.20.210"
+}
+
 variable "gitops_repo_url" {
   description = "Git repository URL for ArgoCD applications (source of truth)"
   type        = string

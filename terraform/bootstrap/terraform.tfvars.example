@@ -11,6 +11,9 @@ calico_version     = "3.31.4"
 pod_network_cidr   = "10.244.0.0/16"
 service_cidr       = "10.96.0.0/12"
 
+# MetalLB must use free IPs from the Incus bridge subnet, outside Incus DHCP.
+metallb_ip_range = "10.75.20.200-10.75.20.210"
+
 # GitOps configuration (Source of Truth)
 gitops_repo_url        = "https://github.com/skyengpro/openstack-deployment.git"
 gitops_target_revision = "feat/deploy-neutron-agent-on-bare-metal-using-containers"
